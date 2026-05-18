@@ -20,6 +20,44 @@ Safehold is the alternative. The agent gets a field value. You get a consent pro
 
 Open source, so none of this requires trust.
 
+## What it isn't
+
+A few things that get confused with safehold but solve a different problem.
+
+### 1Password, Bitwarden, op CLI
+
+You can stuff a passport into 1Password. The op CLI can read specific fields. There's even an official 1Password MCP server now. So yes, parts of this overlap.
+
+What's different is the trust model. Once your 1Password vault is unlocked, anything with that session can read anything in it. No per-field consent, no "why are you asking for this?" prompt. The vault is built for humans typing passwords, not for agents pulling structured fields with a stated reason.
+
+Safehold gates each field individually, every time, with a purpose attached.
+
+### Browser autofill, Apple Passwords, iCloud Keychain
+
+Works fine if your agent is a browser filling a form. Doesn't help when it isn't. Agents working over APIs, CLI tools, or other MCP servers never see the autofill layer, so you end up copy-pasting from a passwords app into a chat anyway. Safehold gives a non-browser agent a way to request a passport number without that detour.
+
+### Apple Wallet, Google Wallet, government digital ID apps
+
+Locked to the platform. Apple Wallet won't hand your boarding pass to a third-party agent. mDL pilots and the EU eIDAS wallet are issuer-controlled and narrow in scope. None of them speak MCP, and none will let an agent on your laptop request a field from your driving licence.
+
+### Pasting it into the chat
+
+People do this. They drop their passport number into a system prompt, or type it into a message and trust the agent to handle it. The number then lives in chat history, gets shipped to the model provider, and sticks around in their logs. You also have no record of which agent used it for what.
+
+Safehold keeps the document on disk, encrypted, and only releases the one field the agent asked for. Nothing extra ends up in the conversation.
+
+### A plain JSON file plus the filesystem MCP
+
+Tempting if you're a developer. `~/identity.json` plus the filesystem MCP is three lines of config and done. It also gives every other agent on the box the same access, with no encryption at rest, no logging, and no consent step. The first time that file shows up in a backup or a screen share, you have a problem.
+
+### Persona, Stripe Identity, Onfido, Plaid
+
+KYC vendors. You send them your documents, they store them, and partner services query them on your behalf. The model assumes you don't hold the keys. Safehold takes the other direction: documents stay on your machine and you approve every release.
+
+### HashiCorp Vault, AWS Secrets Manager, Doppler, Infisical
+
+Built for service secrets, not personal identity. No human-facing consent flow, no schema for documents, and operationally heavy for someone who just wants their passport readable by an agent on their laptop.
+
 ## How it works
 
 Safehold runs as a stdio MCP server. Documents go into `~/.safehold/vault/` as individual encrypted files. Every retrieval is logged to `~/.safehold/access-log.enc`.

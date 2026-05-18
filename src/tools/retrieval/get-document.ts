@@ -8,10 +8,19 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
     'get_document',
     'Retrieve fields from any document type not covered by a dedicated tool. The user will be prompted for consent before any data is returned.',
     {
-      document_type: z.string().describe('The document type to retrieve (e.g. "insurance_card")'),
-      fields: z.array(z.string()).min(1).describe('The field names to retrieve from the document'),
+      document_type: z
+        .string()
+        .min(1)
+        .max(64)
+        .describe('The document type to retrieve (e.g. "insurance_card")'),
+      fields: z
+        .array(z.string().min(1).max(64))
+        .min(1)
+        .describe('The field names to retrieve from the document'),
       purpose: z
         .string()
+        .min(1)
+        .max(500)
         .describe('Why the calling agent needs this data — shown to the user for consent'),
     },
     async ({ document_type, fields, purpose }) => {

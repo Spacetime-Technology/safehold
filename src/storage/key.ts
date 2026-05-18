@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 
@@ -15,6 +15,12 @@ export function loadOrCreateKey(vaultDir: string): Uint8Array {
   }
   const keyPath = join(vaultDir, KEY_FILENAME);
   if (existsSync(keyPath)) {
+    const stats = statSync(keyPath);
+    if ((stats.mode & 0o077) !== 0) {
+      throw new Error(
+        `Master key has insecure permissions (${(stats.mode & 0o777).toString(8)}). Expected 0600.`
+      );
+    }
     try {
       return new Uint8Array(readFileSync(keyPath));
     } catch (err) {

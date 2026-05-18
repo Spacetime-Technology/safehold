@@ -24,6 +24,8 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .describe('The driving licence fields to retrieve'),
       purpose: z
         .string()
+        .min(1)
+        .max(500)
         .describe('Why the calling agent needs this data — shown to the user for consent'),
     },
     async ({ fields, purpose }) => {

@@ -13,6 +13,8 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
       type: z.enum(PHOTO_TYPES).describe('The type of photo to retrieve'),
       purpose: z
         .string()
+        .min(1)
+        .max(500)
         .describe('Why the calling agent needs this photo — shown to the user for consent'),
     },
     async ({ type, purpose }) => {

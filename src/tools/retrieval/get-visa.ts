@@ -20,6 +20,8 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
       fields: z.array(z.enum(VISA_FIELDS)).min(1).describe('The visa fields to retrieve'),
       purpose: z
         .string()
+        .min(1)
+        .max(500)
         .describe('Why the calling agent needs this data — shown to the user for consent'),
     },
     async ({ fields, purpose }) => {

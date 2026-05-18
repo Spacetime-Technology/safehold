@@ -41,24 +41,18 @@ export function appendLogEntry(
   key: Uint8Array,
   entry: Omit<AccessLogEntry, 'id' | 'timestamp'>
 ): void {
-  try {
-    const entries = readEntries(baseDir, key);
-    const newEntry: AccessLogEntry = {
-      id: randomUUID(),
-      timestamp: new Date().toISOString(),
-      tool_name: entry.tool_name,
-      client_name: entry.client_name,
-      fields_requested: entry.fields_requested,
-      purpose: entry.purpose,
-      ...(entry.document_id !== undefined ? { document_id: entry.document_id } : {}),
-    };
-    entries.push(newEntry);
-    writeEntries(baseDir, key, entries);
-  } catch (err) {
-    process.stderr.write(
-      `[safehold] Failed to append access log entry: ${err instanceof Error ? err.message : String(err)}\n`
-    );
-  }
+  const entries = readEntries(baseDir, key);
+  const newEntry: AccessLogEntry = {
+    id: randomUUID(),
+    timestamp: new Date().toISOString(),
+    tool_name: entry.tool_name,
+    client_name: entry.client_name,
+    fields_requested: entry.fields_requested,
+    purpose: entry.purpose,
+    ...(entry.document_id !== undefined ? { document_id: entry.document_id } : {}),
+  };
+  entries.push(newEntry);
+  writeEntries(baseDir, key, entries);
 }
 
 export function getLogEntries(

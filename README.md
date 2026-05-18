@@ -159,6 +159,16 @@ npm run build     # compile to dist/
 npm run dev       # run directly with tsx (no build step)
 ```
 
+## Releasing
+
+```bash
+npm version patch   # bug fix  (0.1.0 → 0.1.1)
+npm version minor   # feature  (0.1.0 → 0.2.0)
+npm version major   # breaking (0.1.0 → 1.0.0)
+```
+
+Checks that you're on a clean, up-to-date main branch, bumps the version, commits, tags, and pushes. CI publishes to npm.
+
 ## Built by
 
 [Spacetime Technology](https://github.com/spacetime-technology)

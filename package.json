@@ -12,6 +12,8 @@
   ],
   "scripts": {
     "prepare": "husky",
+    "preversion": "bash scripts/prerelease.sh",
+    "postversion": "git push --follow-tags origin main",
     "prepublishOnly": "npm run build",
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsx src/index.ts",

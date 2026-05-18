@@ -1,5 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
+import { getDocumentByType } from '../../storage/vault.js';
+import { appendLogEntry } from '../../storage/access-log-store.js';
 
 const NATIONAL_ID_FIELDS = [
   'given_name',
@@ -11,17 +13,7 @@ const NATIONAL_ID_FIELDS = [
   'issuing_country',
 ] as const;
 
-const STUB_DATA: Record<(typeof NATIONAL_ID_FIELDS)[number], string> = {
-  given_name: 'STUB_GIVEN_NAME',
-  family_name: 'STUB_FAMILY_NAME',
-  date_of_birth: '1990-01-01',
-  id_number: 'STUB-ID-001',
-  nationality: 'STUB_NATIONALITY',
-  expiry_date: '2030-01-01',
-  issuing_country: 'STUB_COUNTRY',
-};
-
-export function register(server: McpServer): void {
+export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'get_national_id',
     'Retrieve specific fields from the stored national identity card. The user will be prompted for consent before any data is returned.',
@@ -35,7 +27,21 @@ export function register(server: McpServer): void {
         .describe('Why the calling agent needs this data — shown to the user for consent'),
     },
     async ({ fields, purpose }) => {
-      const result = Object.fromEntries(fields.map((f) => [f, STUB_DATA[f]]));
+      const doc = getDocumentByType(vaultDir, key, 'national_id');
+      if (!doc) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: 'No national ID found in vault' }) }],
+          isError: true,
+        };
+      }
+      const result = Object.fromEntries(fields.map((f) => [f, doc.fields[f]]));
+      appendLogEntry(vaultDir, key, {
+        tool_name: 'get_national_id',
+        client_name: 'unknown',
+        fields_requested: [...fields],
+        purpose,
+        document_id: doc.id,
+      });
       return {
         content: [
           {

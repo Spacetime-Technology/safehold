@@ -1,7 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
+import { getDocumentByType } from '../../storage/vault.js';
+import { appendLogEntry } from '../../storage/access-log-store.js';
 
-export function register(server: McpServer): void {
+export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'get_document',
     'Retrieve fields from any document type not covered by a dedicated tool. The user will be prompted for consent before any data is returned.',
@@ -16,7 +18,21 @@ export function register(server: McpServer): void {
         .describe('Why the calling agent needs this data — shown to the user for consent'),
     },
     async ({ document_type, fields, purpose }) => {
-      const result = Object.fromEntries(fields.map((f) => [f, `STUB_${f.toUpperCase()}`]));
+      const doc = getDocumentByType(vaultDir, key, document_type);
+      if (!doc) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: `No ${document_type} found in vault` }) }],
+          isError: true,
+        };
+      }
+      const result = Object.fromEntries(fields.map((f) => [f, doc.fields[f]]));
+      appendLogEntry(vaultDir, key, {
+        tool_name: 'get_document',
+        client_name: 'unknown',
+        fields_requested: [...fields],
+        purpose,
+        document_id: doc.id,
+      });
       return {
         content: [
           {

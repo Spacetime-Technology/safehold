@@ -1,30 +1,44 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
+import { getDocumentByType } from '../../storage/vault.js';
+import { appendLogEntry } from '../../storage/access-log-store.js';
 
-// Minimal 1x1 transparent PNG as a placeholder stub
-const STUB_PNG_BASE64 =
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+const PHOTO_TYPES = ['passport_style', 'selfie', 'signature'] as const;
 
-export function register(server: McpServer): void {
+export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'get_photo',
     'Retrieve a stored photo. Returns base64-encoded image data. The user will be prompted for consent before any data is returned.',
     {
       type: z
-        .enum(['passport_style', 'selfie', 'signature'])
+        .enum(PHOTO_TYPES)
         .describe('The type of photo to retrieve'),
       purpose: z
         .string()
         .describe('Why the calling agent needs this photo — shown to the user for consent'),
     },
     async ({ type, purpose }) => {
+      const doc = getDocumentByType(vaultDir, key, `photo_${type}`);
+      if (!doc) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: `No ${type} photo found in vault` }) }],
+          isError: true,
+        };
+      }
+      appendLogEntry(vaultDir, key, {
+        tool_name: 'get_photo',
+        client_name: 'unknown',
+        fields_requested: [type],
+        purpose,
+        document_id: doc.id,
+      });
       return {
         content: [
           {
             type: 'text',
             text: JSON.stringify({
-              data: STUB_PNG_BASE64,
-              mime_type: 'image/png',
+              data: doc.fields['data'],
+              mime_type: doc.fields['mime_type'],
               photo_type: type,
               purpose,
             }),

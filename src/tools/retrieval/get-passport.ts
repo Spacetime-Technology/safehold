@@ -1,5 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
+import { getDocumentByType } from '../../storage/vault.js';
+import { appendLogEntry } from '../../storage/access-log-store.js';
 
 const PASSPORT_FIELDS = [
   'given_name',
@@ -12,18 +14,7 @@ const PASSPORT_FIELDS = [
   'gender',
 ] as const;
 
-const STUB_DATA: Record<(typeof PASSPORT_FIELDS)[number], string> = {
-  given_name: 'STUB_GIVEN_NAME',
-  family_name: 'STUB_FAMILY_NAME',
-  nationality: 'STUB_NATIONALITY',
-  date_of_birth: '1990-01-01',
-  passport_number: 'STUB123456',
-  expiry_date: '2030-01-01',
-  issuing_country: 'STUB_COUNTRY',
-  gender: 'STUB_GENDER',
-};
-
-export function register(server: McpServer): void {
+export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'get_passport',
     'Retrieve specific fields from the stored passport. The user will be prompted for consent before any data is returned.',
@@ -37,7 +28,21 @@ export function register(server: McpServer): void {
         .describe('Why the calling agent needs this data — shown to the user for consent'),
     },
     async ({ fields, purpose }) => {
-      const result = Object.fromEntries(fields.map((f) => [f, STUB_DATA[f]]));
+      const doc = getDocumentByType(vaultDir, key, 'passport');
+      if (!doc) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: 'No passport found in vault' }) }],
+          isError: true,
+        };
+      }
+      const result = Object.fromEntries(fields.map((f) => [f, doc.fields[f]]));
+      appendLogEntry(vaultDir, key, {
+        tool_name: 'get_passport',
+        client_name: 'unknown',
+        fields_requested: [...fields],
+        purpose,
+        document_id: doc.id,
+      });
       return {
         content: [
           {

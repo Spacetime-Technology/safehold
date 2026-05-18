@@ -1,5 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
+import { getDocumentByType } from '../../storage/vault.js';
+import { appendLogEntry } from '../../storage/access-log-store.js';
 
 const VISA_FIELDS = [
   'visa_type',
@@ -10,16 +12,7 @@ const VISA_FIELDS = [
   'reference_number',
 ] as const;
 
-const STUB_DATA: Record<(typeof VISA_FIELDS)[number], string> = {
-  visa_type: 'STUB_TYPE',
-  issuing_country: 'STUB_COUNTRY',
-  issue_date: '2024-01-01',
-  expiry_date: '2026-01-01',
-  entries_allowed: 'multiple',
-  reference_number: 'STUB-VISA-001',
-};
-
-export function register(server: McpServer): void {
+export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'get_visa',
     'Retrieve specific fields from a stored visa. The user will be prompted for consent before any data is returned.',
@@ -33,7 +26,21 @@ export function register(server: McpServer): void {
         .describe('Why the calling agent needs this data — shown to the user for consent'),
     },
     async ({ fields, purpose }) => {
-      const result = Object.fromEntries(fields.map((f) => [f, STUB_DATA[f]]));
+      const doc = getDocumentByType(vaultDir, key, 'visa');
+      if (!doc) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: 'No visa found in vault' }) }],
+          isError: true,
+        };
+      }
+      const result = Object.fromEntries(fields.map((f) => [f, doc.fields[f]]));
+      appendLogEntry(vaultDir, key, {
+        tool_name: 'get_visa',
+        client_name: 'unknown',
+        fields_requested: [...fields],
+        purpose,
+        document_id: doc.id,
+      });
       return {
         content: [
           {

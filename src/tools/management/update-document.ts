@@ -1,7 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
+import { updateDocument } from '../../storage/vault.js';
 
-export function register(server: McpServer): void {
+export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'update_document',
     'Update fields on an existing document. Only the provided keys are changed.',
@@ -11,12 +12,13 @@ export function register(server: McpServer): void {
         .record(z.string(), z.unknown())
         .describe('The fields to update — only provided keys are changed'),
     },
-    async () => {
+    async ({ id, fields }) => {
+      const updated = updateDocument(vaultDir, key, id, fields);
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({ updated: true }),
+            text: JSON.stringify({ updated }),
           },
         ],
       };

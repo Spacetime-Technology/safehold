@@ -1,7 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
+import { getLogEntries } from '../../storage/access-log-store.js';
 
-export function register(server: McpServer): void {
+export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'get_access_log',
     'View the history of document field accesses — what was shared, with which client, and when.',
@@ -17,12 +18,16 @@ export function register(server: McpServer): void {
         .optional()
         .describe('Filter entries to a specific document ID'),
     },
-    async () => {
+    async ({ limit, document_id }) => {
+      const entries = getLogEntries(vaultDir, key, {
+        ...(document_id !== undefined ? { document_id } : {}),
+        ...(limit !== undefined ? { limit } : {}),
+      });
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({ entries: [] }),
+            text: JSON.stringify({ entries }),
           },
         ],
       };

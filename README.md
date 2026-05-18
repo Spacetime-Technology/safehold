@@ -16,7 +16,11 @@ Open source, so none of this requires trust.
 
 ## How it works
 
-Documents are encrypted and stored locally. Safehold runs as a stdio MCP server. Other MCP servers (travel booking, visa applications, form-filling agents) can request specific fields from your documents. You control what gets shared, every time.
+Safehold runs as a stdio MCP server. Documents go into `~/.safehold/vault/` as individual encrypted files. Every retrieval is logged to `~/.safehold/access-log.enc`.
+
+Encryption is XChaCha20-Poly1305 via [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers), audited by Cure53, no external dependencies. On first run a 32-byte key is written to `~/.safehold/master.key` (mode 0600).
+
+Other MCP clients can request specific fields from your documents. You control what gets shared, every time.
 
 ## Usage
 

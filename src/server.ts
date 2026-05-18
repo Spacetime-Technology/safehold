@@ -1,4 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { loadOrCreateKey } from './storage/key.js';
 import { register as registerGetPassport } from './tools/retrieval/get-passport.js';
 import { register as registerGetNationalId } from './tools/retrieval/get-national-id.js';
 import { register as registerGetDrivingLicense } from './tools/retrieval/get-driving-license.js';
@@ -11,7 +14,11 @@ import { register as registerDeleteDocument } from './tools/management/delete-do
 import { register as registerUpdateDocument } from './tools/management/update-document.js';
 import { register as registerGetAccessLog } from './tools/management/get-access-log.js';
 
-export function createServer(): McpServer {
+export function createServer(vaultDir?: string): McpServer {
+  const resolvedVaultDir =
+    vaultDir ?? process.env['SAFEHOLD_VAULT_DIR'] ?? join(homedir(), '.safehold');
+  const key = loadOrCreateKey(resolvedVaultDir);
+
   const server = new McpServer(
     { name: 'safehold', version: '0.1.0' },
     {
@@ -22,18 +29,18 @@ export function createServer(): McpServer {
     }
   );
 
-  registerGetPassport(server);
-  registerGetNationalId(server);
-  registerGetDrivingLicense(server);
-  registerGetVisa(server);
-  registerGetPhoto(server);
-  registerGetDocument(server);
+  registerGetPassport(server, resolvedVaultDir, key);
+  registerGetNationalId(server, resolvedVaultDir, key);
+  registerGetDrivingLicense(server, resolvedVaultDir, key);
+  registerGetVisa(server, resolvedVaultDir, key);
+  registerGetPhoto(server, resolvedVaultDir, key);
+  registerGetDocument(server, resolvedVaultDir, key);
 
-  registerListDocuments(server);
-  registerAddDocument(server);
-  registerDeleteDocument(server);
-  registerUpdateDocument(server);
-  registerGetAccessLog(server);
+  registerListDocuments(server, resolvedVaultDir, key);
+  registerAddDocument(server, resolvedVaultDir, key);
+  registerDeleteDocument(server, resolvedVaultDir, key);
+  registerUpdateDocument(server, resolvedVaultDir, key);
+  registerGetAccessLog(server, resolvedVaultDir, key);
 
   return server;
 }

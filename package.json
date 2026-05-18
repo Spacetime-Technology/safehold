@@ -2,7 +2,26 @@
   "name": "safehold",
   "version": "1.0.2",
   "description": "Self-custody KYC document storage via MCP",
+  "mcpName": "io.github.Spacetime-Technology/safehold",
   "type": "module",
+  "license": "MIT",
+  "author": "Freddie Coleman <freddie.coleman@protonmail.com>",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "vault",
+    "encryption",
+    "xchacha20",
+    "kyc",
+    "self-custody",
+    "passport",
+    "national-id",
+    "driving-license",
+    "identity-documents",
+    "claude",
+    "claude-desktop"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Spacetime-Technology/safehold.git"
@@ -16,7 +35,8 @@
   },
   "files": [
     "dist/**/*",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "prepare": "husky",

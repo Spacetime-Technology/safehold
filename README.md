@@ -2,6 +2,8 @@
 
 [![npm version](https://img.shields.io/npm/v/safehold)](https://www.npmjs.com/package/safehold)
 [![node](https://img.shields.io/node/v/safehold)](https://nodejs.org)
+[![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io/v0/servers?search=safehold)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Your identity documents, on your machine, shared only when you say so.
 

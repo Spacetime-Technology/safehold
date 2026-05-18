@@ -19,10 +19,7 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
     'get_passport',
     'Retrieve specific fields from the stored passport. The user will be prompted for consent before any data is returned.',
     {
-      fields: z
-        .array(z.enum(PASSPORT_FIELDS))
-        .min(1)
-        .describe('The passport fields to retrieve'),
+      fields: z.array(z.enum(PASSPORT_FIELDS)).min(1).describe('The passport fields to retrieve'),
       purpose: z
         .string()
         .describe('Why the calling agent needs this data — shown to the user for consent'),
@@ -32,7 +29,9 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         const doc = getDocumentByType(vaultDir, key, 'passport');
         if (!doc) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'No passport found in vault' }) }],
+            content: [
+              { type: 'text', text: JSON.stringify({ error: 'No passport found in vault' }) },
+            ],
             isError: true,
           };
         }
@@ -56,7 +55,14 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         };
       } catch (err) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: err instanceof Error ? err.message : 'Internal error',
+              }),
+            },
+          ],
           isError: true,
         };
       }

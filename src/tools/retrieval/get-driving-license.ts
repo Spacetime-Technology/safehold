@@ -31,7 +31,12 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         const doc = getDocumentByType(vaultDir, key, 'driving_license');
         if (!doc) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'No driving licence found in vault' }) }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({ error: 'No driving licence found in vault' }),
+              },
+            ],
             isError: true,
           };
         }
@@ -55,7 +60,14 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         };
       } catch (err) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: err instanceof Error ? err.message : 'Internal error',
+              }),
+            },
+          ],
           isError: true,
         };
       }

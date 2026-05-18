@@ -20,7 +20,14 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         };
       } catch (err) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: err instanceof Error ? err.message : 'Internal error',
+              }),
+            },
+          ],
           isError: true,
         };
       }

@@ -17,10 +17,7 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
     'get_visa',
     'Retrieve specific fields from a stored visa. The user will be prompted for consent before any data is returned.',
     {
-      fields: z
-        .array(z.enum(VISA_FIELDS))
-        .min(1)
-        .describe('The visa fields to retrieve'),
+      fields: z.array(z.enum(VISA_FIELDS)).min(1).describe('The visa fields to retrieve'),
       purpose: z
         .string()
         .describe('Why the calling agent needs this data — shown to the user for consent'),
@@ -54,7 +51,14 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         };
       } catch (err) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: err instanceof Error ? err.message : 'Internal error',
+              }),
+            },
+          ],
           isError: true,
         };
       }

@@ -9,10 +9,7 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
     'Retrieve fields from any document type not covered by a dedicated tool. The user will be prompted for consent before any data is returned.',
     {
       document_type: z.string().describe('The document type to retrieve (e.g. "insurance_card")'),
-      fields: z
-        .array(z.string())
-        .min(1)
-        .describe('The field names to retrieve from the document'),
+      fields: z.array(z.string()).min(1).describe('The field names to retrieve from the document'),
       purpose: z
         .string()
         .describe('Why the calling agent needs this data — shown to the user for consent'),
@@ -22,7 +19,12 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         const doc = getDocumentByType(vaultDir, key, document_type);
         if (!doc) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: `No ${document_type} found in vault` }) }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({ error: `No ${document_type} found in vault` }),
+              },
+            ],
             isError: true,
           };
         }
@@ -46,7 +48,14 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         };
       } catch (err) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: err instanceof Error ? err.message : 'Internal error',
+              }),
+            },
+          ],
           isError: true,
         };
       }

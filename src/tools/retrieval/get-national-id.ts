@@ -31,7 +31,9 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         const doc = getDocumentByType(vaultDir, key, 'national_id');
         if (!doc) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'No national ID found in vault' }) }],
+            content: [
+              { type: 'text', text: JSON.stringify({ error: 'No national ID found in vault' }) },
+            ],
             isError: true,
           };
         }
@@ -55,7 +57,14 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         };
       } catch (err) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: err instanceof Error ? err.message : 'Internal error',
+              }),
+            },
+          ],
           isError: true,
         };
       }

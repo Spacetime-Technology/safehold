@@ -10,9 +10,7 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
     'get_photo',
     'Retrieve a stored photo. Returns base64-encoded image data. The user will be prompted for consent before any data is returned.',
     {
-      type: z
-        .enum(PHOTO_TYPES)
-        .describe('The type of photo to retrieve'),
+      type: z.enum(PHOTO_TYPES).describe('The type of photo to retrieve'),
       purpose: z
         .string()
         .describe('Why the calling agent needs this photo — shown to the user for consent'),
@@ -22,7 +20,9 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         const doc = getDocumentByType(vaultDir, key, `photo_${type}`);
         if (!doc) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: `No ${type} photo found in vault` }) }],
+            content: [
+              { type: 'text', text: JSON.stringify({ error: `No ${type} photo found in vault` }) },
+            ],
             isError: true,
           };
         }
@@ -48,7 +48,14 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         };
       } catch (err) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: err instanceof Error ? err.message : 'Internal error',
+              }),
+            },
+          ],
           isError: true,
         };
       }

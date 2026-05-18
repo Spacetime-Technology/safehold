@@ -62,10 +62,7 @@ function readDoc(baseDir: string, key: Uint8Array, id: string): StoredDocument |
   try {
     return JSON.parse(Buffer.from(plain).toString('utf8')) as StoredDocument;
   } catch (err) {
-    throw new Error(
-      `Document ${id} could not be parsed — file may be corrupted`,
-      { cause: err }
-    );
+    throw new Error(`Document ${id} could not be parsed — file may be corrupted`, { cause: err });
   }
 }
 
@@ -105,10 +102,9 @@ export function listDocuments(baseDir: string, key: Uint8Array): DocumentMetadat
   try {
     files = readdirSync(getVaultSubdir(baseDir)).filter((f) => f.endsWith('.enc'));
   } catch (err) {
-    throw new Error(
-      `Failed to read vault: ${err instanceof Error ? err.message : String(err)}`,
-      { cause: err }
-    );
+    throw new Error(`Failed to read vault: ${err instanceof Error ? err.message : String(err)}`, {
+      cause: err,
+    });
   }
   const results: DocumentMetadata[] = [];
   for (const file of files) {
@@ -137,10 +133,9 @@ export function getDocumentByType(
   try {
     files = readdirSync(getVaultSubdir(baseDir)).filter((f) => f.endsWith('.enc'));
   } catch (err) {
-    throw new Error(
-      `Failed to read vault: ${err instanceof Error ? err.message : String(err)}`,
-      { cause: err }
-    );
+    throw new Error(`Failed to read vault: ${err instanceof Error ? err.message : String(err)}`, {
+      cause: err,
+    });
   }
   for (const file of files) {
     const id = file.slice(0, -4);

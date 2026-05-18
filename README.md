@@ -97,6 +97,14 @@ Safehold also ships ready-made workflow prompts. These show up as slash commands
 
 Prompts don't access your data themselves. They tell the calling agent which Safehold tools to call, in what order, and with what `purpose`. Every retrieval still goes through the normal consent flow.
 
+## Skills
+
+[safehold-skills](https://github.com/Spacetime-Technology/safehold-skills) is a companion package of Claude Code skills that turn Safehold from a vault into finished workflows: airline check-in, ESTA applications, KYC forms, and so on. Each skill pairs Safehold with a browser MCP and asks for fields one at a time with a precise purpose string.
+
+```bash
+npx safehold-skills install
+```
+
 ## Quick Install
 
 Requires Node.js >=20. No build step.

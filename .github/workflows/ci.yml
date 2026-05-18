@@ -17,6 +17,11 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm audit --audit-level=high
+      - name: Assert package.json and server.json versions in sync
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          server=$(node -p "require('./server.json').version")
+          [ "$pkg" = "$server" ] || { echo "version drift: package.json=$pkg server.json=$server"; exit 1; }
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check

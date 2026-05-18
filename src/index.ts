@@ -7,6 +7,8 @@ const transport = new StdioServerTransport();
 
 await server.connect(transport);
 
-process.on('SIGINT', () => {
+const shutdown = (): void => {
   void server.close().then(() => process.exit(0));
-});
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

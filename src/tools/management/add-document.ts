@@ -1,11 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
 import { addDocument } from '../../storage/vault.js';
+import { validateDocumentFields } from '../../schemas/documents.js';
 
 export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'add_document',
-    'Add a new document to the vault. The document is stored locally and encrypted.',
+    'Add a new document to the vault. The document is stored locally and encrypted. Known document types (passport, national_id, driving_license, visa, photo_*) are strictly validated.',
     {
       document_type: z.string().describe('The type of document (e.g. "passport", "visa")'),
       label: z
@@ -15,6 +16,13 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
     },
     async ({ document_type, label, fields }) => {
       try {
+        const validation = validateDocumentFields(document_type, fields);
+        if (!validation.ok) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: validation.error }) }],
+            isError: true,
+          };
+        }
         const doc = addDocument(vaultDir, key, { document_type, label, fields });
         return {
           content: [{ type: 'text', text: JSON.stringify({ id: doc.id, created: true }) }],

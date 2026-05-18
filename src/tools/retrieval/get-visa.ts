@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
-import { getDocumentByType } from '../../storage/vault.js';
-import { appendLogEntry } from '../../storage/access-log-store.js';
+import { retrieveWithConsent } from '../shared/with-consent.js';
 
 const VISA_FIELDS = [
   'visa_type',
@@ -23,34 +22,21 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .min(1)
         .max(500)
         .describe('Why the calling agent needs this data — shown to the user for consent'),
+      document_id: z
+        .string()
+        .optional()
+        .describe('Specific visa id (required when more than one visa is stored)'),
     },
-    async ({ fields, purpose }) => {
+    async ({ fields, purpose, document_id }) => {
       try {
-        const doc = getDocumentByType(vaultDir, key, 'visa');
-        if (!doc) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'No visa found in vault' }) }],
-            isError: true,
-          };
-        }
-        const result = Object.fromEntries(
-          fields.filter((f) => f in doc.fields).map((f) => [f, doc.fields[f]])
-        );
-        appendLogEntry(vaultDir, key, {
-          tool_name: 'get_visa',
-          client_name: server.server.getClientVersion()?.name ?? 'unknown',
-          fields_requested: [...fields],
+        return await retrieveWithConsent(server, vaultDir, key, {
+          toolName: 'get_visa',
+          documentType: 'visa',
+          documentTypeLabel: 'visa',
+          fields: [...fields],
           purpose,
-          document_id: doc.id,
+          ...(document_id !== undefined ? { documentId: document_id } : {}),
         });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ document_type: 'visa', fields: result, purpose }),
-            },
-          ],
-        };
       } catch (err) {
         return {
           content: [

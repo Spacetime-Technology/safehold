@@ -1,3 +1,5 @@
+export type AccessOutcome = 'accepted' | 'declined' | 'auto';
+
 export interface AccessLogEntry {
   id: string;
   timestamp: string;
@@ -6,4 +8,5 @@ export interface AccessLogEntry {
   fields_requested: string[];
   purpose: string;
   document_id?: string;
+  outcome?: AccessOutcome;
 }

@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
-import { getDocumentByType } from '../../storage/vault.js';
-import { appendLogEntry } from '../../storage/access-log-store.js';
+import { retrieveWithConsent } from '../shared/with-consent.js';
 
 const DRIVING_LICENSE_FIELDS = [
   'given_name',
@@ -16,7 +15,7 @@ const DRIVING_LICENSE_FIELDS = [
 export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
     'get_driving_license',
-    'Retrieve specific fields from the stored driving licence. The user will be prompted for consent before any data is returned.',
+    'Retrieve specific fields from a stored driving licence. The user will be prompted for consent before any data is returned.',
     {
       fields: z
         .array(z.enum(DRIVING_LICENSE_FIELDS))
@@ -27,39 +26,21 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .min(1)
         .max(500)
         .describe('Why the calling agent needs this data — shown to the user for consent'),
+      document_id: z
+        .string()
+        .optional()
+        .describe('Specific driving licence id (required when more than one is stored)'),
     },
-    async ({ fields, purpose }) => {
+    async ({ fields, purpose, document_id }) => {
       try {
-        const doc = getDocumentByType(vaultDir, key, 'driving_license');
-        if (!doc) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({ error: 'No driving licence found in vault' }),
-              },
-            ],
-            isError: true,
-          };
-        }
-        const result = Object.fromEntries(
-          fields.filter((f) => f in doc.fields).map((f) => [f, doc.fields[f]])
-        );
-        appendLogEntry(vaultDir, key, {
-          tool_name: 'get_driving_license',
-          client_name: server.server.getClientVersion()?.name ?? 'unknown',
-          fields_requested: [...fields],
+        return await retrieveWithConsent(server, vaultDir, key, {
+          toolName: 'get_driving_license',
+          documentType: 'driving_license',
+          documentTypeLabel: 'driving licence',
+          fields: [...fields],
           purpose,
-          document_id: doc.id,
+          ...(document_id !== undefined ? { documentId: document_id } : {}),
         });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ document_type: 'driving_license', fields: result, purpose }),
-            },
-          ],
-        };
       } catch (err) {
         return {
           content: [

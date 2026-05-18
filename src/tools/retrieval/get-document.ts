@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
-import { getDocumentByType } from '../../storage/vault.js';
-import { appendLogEntry } from '../../storage/access-log-store.js';
+import { retrieveWithConsent } from '../shared/with-consent.js';
 
 export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(
@@ -22,39 +21,21 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .min(1)
         .max(500)
         .describe('Why the calling agent needs this data — shown to the user for consent'),
+      document_id: z
+        .string()
+        .optional()
+        .describe('Specific document id (required when more than one of this type is stored)'),
     },
-    async ({ document_type, fields, purpose }) => {
+    async ({ document_type, fields, purpose, document_id }) => {
       try {
-        const doc = getDocumentByType(vaultDir, key, document_type);
-        if (!doc) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({ error: `No ${document_type} found in vault` }),
-              },
-            ],
-            isError: true,
-          };
-        }
-        const result = Object.fromEntries(
-          fields.filter((f) => f in doc.fields).map((f) => [f, doc.fields[f]])
-        );
-        appendLogEntry(vaultDir, key, {
-          tool_name: 'get_document',
-          client_name: server.server.getClientVersion()?.name ?? 'unknown',
-          fields_requested: [...fields],
+        return await retrieveWithConsent(server, vaultDir, key, {
+          toolName: 'get_document',
+          documentType: document_type,
+          documentTypeLabel: document_type,
+          fields: [...fields],
           purpose,
-          document_id: doc.id,
+          ...(document_id !== undefined ? { documentId: document_id } : {}),
         });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ document_type, fields: result, purpose }),
-            },
-          ],
-        };
       } catch (err) {
         return {
           content: [

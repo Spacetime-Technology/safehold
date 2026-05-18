@@ -5,7 +5,7 @@
   "mcpName": "io.github.Spacetime-Technology/safehold",
   "type": "module",
   "license": "MIT",
-  "author": "Freddie Coleman <freddie.coleman@protonmail.com>",
+  "author": "Spacetime Technology",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -41,6 +41,7 @@
   "scripts": {
     "prepare": "husky",
     "preversion": "bash scripts/prerelease.sh",
+    "version": "node scripts/sync-server-json.js && git add server.json",
     "postversion": "git push --follow-tags origin main",
     "prepublishOnly": "npm run build",
     "build": "tsc -p tsconfig.build.json",

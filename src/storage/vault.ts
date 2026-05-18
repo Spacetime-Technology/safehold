@@ -1,14 +1,8 @@
-import {
-  readFileSync,
-  writeFileSync,
-  readdirSync,
-  unlinkSync,
-  existsSync,
-  mkdirSync,
-} from 'node:fs';
+import { readFileSync, readdirSync, unlinkSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { encrypt, decrypt } from './crypto.js';
+import { atomicWrite } from './atomic-write.js';
 
 export interface StoredDocument {
   id: string;
@@ -29,7 +23,7 @@ export interface DocumentMetadata {
 function getVaultSubdir(baseDir: string): string {
   const dir = join(baseDir, 'vault');
   try {
-    mkdirSync(dir, { recursive: true });
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
   } catch (err) {
     throw new Error(
       `Failed to create vault directory: ${err instanceof Error ? err.message : String(err)}`,
@@ -66,11 +60,18 @@ function readDoc(baseDir: string, key: Uint8Array, id: string): StoredDocument |
   }
 }
 
+const MAX_DOC_SIZE_BYTES = 5 * 1024 * 1024;
+
 function writeDoc(baseDir: string, key: Uint8Array, doc: StoredDocument): void {
   const plain = new Uint8Array(Buffer.from(JSON.stringify(doc), 'utf8'));
+  if (plain.length > MAX_DOC_SIZE_BYTES) {
+    throw new Error(
+      `Document exceeds maximum size of ${MAX_DOC_SIZE_BYTES} bytes (got ${plain.length})`
+    );
+  }
   const blob = encrypt(key, plain);
   try {
-    writeFileSync(docPath(baseDir, doc.id), blob);
+    atomicWrite(docPath(baseDir, doc.id), blob);
   } catch (err) {
     throw new Error(
       `Failed to write document ${doc.id}: ${err instanceof Error ? err.message : String(err)}`,
@@ -124,11 +125,11 @@ export function listDocuments(baseDir: string, key: Uint8Array): DocumentMetadat
   return results;
 }
 
-export function getDocumentByType(
+export function getDocumentsByType(
   baseDir: string,
   key: Uint8Array,
   documentType: string
-): StoredDocument | null {
+): StoredDocument[] {
   let files: string[];
   try {
     files = readdirSync(getVaultSubdir(baseDir)).filter((f) => f.endsWith('.enc'));
@@ -137,6 +138,7 @@ export function getDocumentByType(
       cause: err,
     });
   }
+  const results: StoredDocument[] = [];
   for (const file of files) {
     const id = file.slice(0, -4);
     let doc: StoredDocument | null;
@@ -145,9 +147,17 @@ export function getDocumentByType(
     } catch {
       continue;
     }
-    if (doc?.document_type === documentType) return doc;
+    if (doc?.document_type === documentType) results.push(doc);
   }
-  return null;
+  return results;
+}
+
+export function getDocumentById(
+  baseDir: string,
+  key: Uint8Array,
+  id: string
+): StoredDocument | null {
+  return readDoc(baseDir, key, id);
 }
 
 export function updateDocument(

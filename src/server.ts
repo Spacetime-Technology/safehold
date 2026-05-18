@@ -1,9 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { homedir } from 'node:os';
+import { homedir, platform } from 'node:os';
 import { join } from 'node:path';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, statSync } from 'node:fs';
 import { loadOrCreateKey } from './storage/key.js';
 import { encrypt, decrypt } from './storage/crypto.js';
+import { VERSION } from './version.js';
 import { register as registerGetPassport } from './tools/retrieval/get-passport.js';
 import { register as registerGetNationalId } from './tools/retrieval/get-national-id.js';
 import { register as registerGetDrivingLicense } from './tools/retrieval/get-driving-license.js';
@@ -17,7 +18,19 @@ import { register as registerUpdateDocument } from './tools/management/update-do
 import { register as registerGetAccessLog } from './tools/management/get-access-log.js';
 
 function assertVaultReady(vaultDir: string, key: Uint8Array): void {
-  mkdirSync(join(vaultDir, 'vault'), { recursive: true });
+  mkdirSync(join(vaultDir, 'vault'), { recursive: true, mode: 0o700 });
+  if (platform() !== 'win32') {
+    try {
+      const mode = statSync(vaultDir).mode & 0o777;
+      if ((mode & 0o077) !== 0) {
+        process.stderr.write(
+          `safehold: warning — vault directory ${vaultDir} has loose permissions (${mode.toString(8)}). Expected 0700.\n`
+        );
+      }
+    } catch {
+      // best-effort
+    }
+  }
   const probe = new Uint8Array([1, 2, 3]);
   const decrypted = decrypt(key, encrypt(key, probe));
   if (!decrypted || decrypted[0] !== 1) {
@@ -32,7 +45,7 @@ export function createServer(vaultDir?: string): McpServer {
   assertVaultReady(resolvedVaultDir, key);
 
   const server = new McpServer(
-    { name: 'safehold', version: '0.1.0' },
+    { name: 'safehold', version: VERSION },
     {
       instructions:
         'Safehold stores identity documents locally and encrypted. ' +

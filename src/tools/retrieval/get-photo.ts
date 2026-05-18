@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
-import { getDocumentByType } from '../../storage/vault.js';
-import { appendLogEntry } from '../../storage/access-log-store.js';
+import { retrieveWithConsent } from '../shared/with-consent.js';
 
 const PHOTO_TYPES = ['passport_style', 'selfie', 'signature'] as const;
 
@@ -16,38 +15,22 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .min(1)
         .max(500)
         .describe('Why the calling agent needs this photo — shown to the user for consent'),
+      document_id: z
+        .string()
+        .optional()
+        .describe('Specific photo id (required when more than one of this type is stored)'),
     },
-    async ({ type, purpose }) => {
+    async ({ type, purpose, document_id }) => {
       try {
-        const doc = getDocumentByType(vaultDir, key, `photo_${type}`);
-        if (!doc) {
-          return {
-            content: [
-              { type: 'text', text: JSON.stringify({ error: `No ${type} photo found in vault` }) },
-            ],
-            isError: true,
-          };
-        }
-        appendLogEntry(vaultDir, key, {
-          tool_name: 'get_photo',
-          client_name: server.server.getClientVersion()?.name ?? 'unknown',
-          fields_requested: [type],
+        return await retrieveWithConsent(server, vaultDir, key, {
+          toolName: 'get_photo',
+          documentType: `photo_${type}`,
+          documentTypeLabel: `${type.replace('_', ' ')} photo`,
+          fields: [type],
           purpose,
-          document_id: doc.id,
+          shape: 'photo',
+          ...(document_id !== undefined ? { documentId: document_id } : {}),
         });
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                data: doc.fields['data'],
-                mime_type: doc.fields['mime_type'],
-                photo_type: type,
-                purpose,
-              }),
-            },
-          ],
-        };
       } catch (err) {
         return {
           content: [

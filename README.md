@@ -1,6 +1,10 @@
 # Safehold
 
-Your identity documents, on your machine, shared only when you say so. That's what self-sovereign identity actually looks like.
+[![npm version](https://img.shields.io/npm/v/safehold)](https://www.npmjs.com/package/safehold)
+[![node](https://img.shields.io/node/v/safehold)](https://nodejs.org)
+
+Your identity documents, on your machine, shared only when you say so.
+
 
 ## What it is
 
@@ -22,26 +26,6 @@ Encryption is XChaCha20-Poly1305 via [`@noble/ciphers`](https://github.com/paulm
 
 Other MCP clients can request specific fields from your documents. You control what gets shared, every time.
 
-## Usage
-
-Build and add to your MCP client config (e.g. Claude Desktop):
-
-```bash
-npm install
-npm run build
-```
-
-```json
-{
-  "mcpServers": {
-    "safehold": {
-      "command": "node",
-      "args": ["/path/to/safehold/dist/index.js"]
-    }
-  }
-}
-```
-
 ## Tools (v1)
 
 | Tool | Description |
@@ -59,6 +43,101 @@ npm run build
 | `get_access_log` | View what was accessed, by which client, and when |
 
 Every retrieval tool accepts a `purpose` parameter. That purpose is shown to you at consent time so you always know why a field is being requested.
+
+## Quick Install
+
+Requires Node.js >=20. No build step.
+
+Most clients use the same JSON config — just the file path differs:
+
+```json
+{
+  "mcpServers": {
+    "safehold": {
+      "command": "npx",
+      "args": ["-y", "safehold@latest"]
+    }
+  }
+}
+```
+
+| Client | Config file |
+|--------|-------------|
+| Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Cursor (project) | `.cursor/mcp.json` |
+| Cursor (global) | `~/.cursor/mcp.json` |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` |
+| Amazon Q Developer (global) | `~/.aws/amazonq/mcp.json` |
+| Amazon Q Developer (project) | `.amazonq/mcp.json` |
+
+Clients with slightly different config formats:
+
+**Claude Code (CLI)**
+```bash
+claude mcp add safehold npx -- -y safehold@latest
+```
+
+**VS Code (GitHub Copilot)** — uses `"servers"` key, enable Agent mode in Copilot Chat. Edit `.vscode/mcp.json` (project) or `~/Library/Application Support/Code/User/mcp.json` (global, macOS):
+```json
+{
+  "servers": {
+    "safehold": {
+      "command": "npx",
+      "args": ["-y", "safehold@latest"]
+    }
+  }
+}
+```
+
+**Zed** — uses `"context_servers"` key in `~/.config/zed/settings.json`:
+```json
+{
+  "context_servers": {
+    "safehold": {
+      "command": "npx",
+      "args": ["-y", "safehold@latest"]
+    }
+  }
+}
+```
+
+**OpenAI Codex CLI** — TOML format in `~/.codex/config.toml`:
+```toml
+[mcp_servers.safehold]
+command = "npx"
+args = ["-y", "safehold@latest"]
+```
+
+**Continue.dev** — create `.continue/mcpServers/safehold.json` (enable Agent mode):
+```json
+{
+  "command": "npx",
+  "args": ["-y", "safehold@latest"]
+}
+```
+
+**Hermes (Nous Research)** — YAML format in `~/.hermes/config.yaml`:
+```yaml
+mcp_servers:
+  safehold:
+    command: npx
+    args: ["-y", "safehold@latest"]
+```
+
+**OpenClaw** — uses `"servers"` key in `~/.openclaw/mcp.json`:
+```json
+{
+  "servers": {
+    "safehold": {
+      "command": "npx",
+      "args": ["-y", "safehold@latest"]
+    }
+  }
+}
+```
+
+---
 
 ## Roadmap
 

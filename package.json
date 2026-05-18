@@ -3,6 +3,14 @@
   "version": "1.0.1",
   "description": "Self-custody KYC document storage via MCP",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Spacetime-Technology/safehold.git"
+  },
+  "homepage": "https://github.com/Spacetime-Technology/safehold#readme",
+  "bugs": {
+    "url": "https://github.com/Spacetime-Technology/safehold/issues"
+  },
   "bin": {
     "safehold": "./dist/index.js"
   },

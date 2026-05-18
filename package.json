@@ -1,6 +1,6 @@
 {
   "name": "safehold",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Self-custody KYC document storage via MCP",
   "type": "module",
   "bin": {

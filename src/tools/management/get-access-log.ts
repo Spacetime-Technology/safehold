@@ -19,18 +19,20 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .describe('Filter entries to a specific document ID'),
     },
     async ({ limit, document_id }) => {
-      const entries = getLogEntries(vaultDir, key, {
-        ...(document_id !== undefined ? { document_id } : {}),
-        ...(limit !== undefined ? { limit } : {}),
-      });
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ entries }),
-          },
-        ],
-      };
+      try {
+        const entries = getLogEntries(vaultDir, key, {
+          ...(document_id !== undefined ? { document_id } : {}),
+          ...(limit !== undefined ? { limit } : {}),
+        });
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ entries }) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          isError: true,
+        };
+      }
     }
   );
 }

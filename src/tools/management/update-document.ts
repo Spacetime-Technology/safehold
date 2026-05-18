@@ -13,15 +13,17 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .describe('The fields to update — only provided keys are changed'),
     },
     async ({ id, fields }) => {
-      const updated = updateDocument(vaultDir, key, id, fields);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ updated }),
-          },
-        ],
-      };
+      try {
+        const updated = updateDocument(vaultDir, key, id, fields);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ updated }) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          isError: true,
+        };
+      }
     }
   );
 }

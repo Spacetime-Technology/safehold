@@ -27,29 +27,38 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .describe('Why the calling agent needs this data — shown to the user for consent'),
     },
     async ({ fields, purpose }) => {
-      const doc = getDocumentByType(vaultDir, key, 'driving_license');
-      if (!doc) {
+      try {
+        const doc = getDocumentByType(vaultDir, key, 'driving_license');
+        if (!doc) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'No driving licence found in vault' }) }],
+            isError: true,
+          };
+        }
+        const result = Object.fromEntries(
+          fields.filter((f) => f in doc.fields).map((f) => [f, doc.fields[f]])
+        );
+        appendLogEntry(vaultDir, key, {
+          tool_name: 'get_driving_license',
+          client_name: server.server.getClientVersion()?.name ?? 'unknown',
+          fields_requested: [...fields],
+          purpose,
+          document_id: doc.id,
+        });
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: 'No driving licence found in vault' }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ document_type: 'driving_license', fields: result, purpose }),
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
           isError: true,
         };
       }
-      const result = Object.fromEntries(fields.map((f) => [f, doc.fields[f]]));
-      appendLogEntry(vaultDir, key, {
-        tool_name: 'get_driving_license',
-        client_name: 'unknown',
-        fields_requested: [...fields],
-        purpose,
-        document_id: doc.id,
-      });
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ document_type: 'driving_license', fields: result, purpose }),
-          },
-        ],
-      };
     }
   );
 }

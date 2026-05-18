@@ -13,15 +13,27 @@ function logPath(baseDir: string): string {
 function readEntries(baseDir: string, key: Uint8Array): AccessLogEntry[] {
   const path = logPath(baseDir);
   if (!existsSync(path)) return [];
-  const blob = readFileSync(path);
-  const plain = decrypt(key, new Uint8Array(blob));
-  return JSON.parse(Buffer.from(plain).toString('utf8')) as AccessLogEntry[];
+  try {
+    const blob = readFileSync(path);
+    const plain = decrypt(key, new Uint8Array(blob));
+    if (plain === null) return [];
+    return JSON.parse(Buffer.from(plain).toString('utf8')) as AccessLogEntry[];
+  } catch {
+    return [];
+  }
 }
 
 function writeEntries(baseDir: string, key: Uint8Array, entries: AccessLogEntry[]): void {
   const plain = new Uint8Array(Buffer.from(JSON.stringify(entries), 'utf8'));
   const blob = encrypt(key, plain);
-  writeFileSync(logPath(baseDir), blob);
+  try {
+    writeFileSync(logPath(baseDir), blob);
+  } catch (err) {
+    throw new Error(
+      `Failed to write access log: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
 }
 
 export function appendLogEntry(
@@ -29,18 +41,24 @@ export function appendLogEntry(
   key: Uint8Array,
   entry: Omit<AccessLogEntry, 'id' | 'timestamp'>
 ): void {
-  const entries = readEntries(baseDir, key);
-  const newEntry: AccessLogEntry = {
-    id: randomUUID(),
-    timestamp: new Date().toISOString(),
-    tool_name: entry.tool_name,
-    client_name: entry.client_name,
-    fields_requested: entry.fields_requested,
-    purpose: entry.purpose,
-    ...(entry.document_id !== undefined ? { document_id: entry.document_id } : {}),
-  };
-  entries.push(newEntry);
-  writeEntries(baseDir, key, entries);
+  try {
+    const entries = readEntries(baseDir, key);
+    const newEntry: AccessLogEntry = {
+      id: randomUUID(),
+      timestamp: new Date().toISOString(),
+      tool_name: entry.tool_name,
+      client_name: entry.client_name,
+      fields_requested: entry.fields_requested,
+      purpose: entry.purpose,
+      ...(entry.document_id !== undefined ? { document_id: entry.document_id } : {}),
+    };
+    entries.push(newEntry);
+    writeEntries(baseDir, key, entries);
+  } catch (err) {
+    process.stderr.write(
+      `[safehold] Failed to append access log entry: ${err instanceof Error ? err.message : String(err)}\n`
+    );
+  }
 }
 
 export function getLogEntries(

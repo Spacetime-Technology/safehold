@@ -7,15 +7,17 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
     'List all stored documents. Returns metadata only (type, label, expiry) — no sensitive field values.',
     {},
     async () => {
-      const documents = listDocuments(vaultDir, key);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ documents }),
-          },
-        ],
-      };
+      try {
+        const documents = listDocuments(vaultDir, key);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ documents }) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          isError: true,
+        };
+      }
     }
   );
 }

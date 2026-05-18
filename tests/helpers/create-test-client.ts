@@ -9,6 +9,16 @@ export async function createTestClient(): Promise<{
   client: Client;
   cleanup: () => Promise<void>;
 }> {
+  const { client, vaultDir, cleanup } = await createTestClientWithDir();
+  void vaultDir;
+  return { client, cleanup };
+}
+
+export async function createTestClientWithDir(): Promise<{
+  client: Client;
+  vaultDir: string;
+  cleanup: () => Promise<void>;
+}> {
   const vaultDir = mkdtempSync(join(tmpdir(), 'safehold-test-'));
   const server = createServer(vaultDir);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -20,6 +30,7 @@ export async function createTestClient(): Promise<{
 
   return {
     client,
+    vaultDir,
     cleanup: async () => {
       await client.close();
       await server.close();

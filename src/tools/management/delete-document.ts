@@ -10,15 +10,17 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
       id: z.string().describe('The ID of the document to delete'),
     },
     async ({ id }) => {
-      const deleted = deleteDocument(vaultDir, key, id);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ deleted }),
-          },
-        ],
-      };
+      try {
+        const deleted = deleteDocument(vaultDir, key, id);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ deleted }) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          isError: true,
+        };
+      }
     }
   );
 }

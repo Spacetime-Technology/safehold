@@ -28,7 +28,14 @@ export interface DocumentMetadata {
 
 function getVaultSubdir(baseDir: string): string {
   const dir = join(baseDir, 'vault');
-  mkdirSync(dir, { recursive: true });
+  try {
+    mkdirSync(dir, { recursive: true });
+  } catch (err) {
+    throw new Error(
+      `Failed to create vault directory: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
   return dir;
 }
 
@@ -39,15 +46,40 @@ function docPath(baseDir: string, id: string): string {
 function readDoc(baseDir: string, key: Uint8Array, id: string): StoredDocument | null {
   const path = docPath(baseDir, id);
   if (!existsSync(path)) return null;
-  const blob = readFileSync(path);
+  let blob: Buffer;
+  try {
+    blob = readFileSync(path);
+  } catch (err) {
+    throw new Error(
+      `Failed to read document ${id}: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
   const plain = decrypt(key, new Uint8Array(blob));
-  return JSON.parse(Buffer.from(plain).toString('utf8')) as StoredDocument;
+  if (plain === null) {
+    throw new Error(`Document ${id} could not be decrypted — file may be corrupted`);
+  }
+  try {
+    return JSON.parse(Buffer.from(plain).toString('utf8')) as StoredDocument;
+  } catch (err) {
+    throw new Error(
+      `Document ${id} could not be parsed — file may be corrupted`,
+      { cause: err }
+    );
+  }
 }
 
 function writeDoc(baseDir: string, key: Uint8Array, doc: StoredDocument): void {
   const plain = new Uint8Array(Buffer.from(JSON.stringify(doc), 'utf8'));
   const blob = encrypt(key, plain);
-  writeFileSync(docPath(baseDir, doc.id), blob);
+  try {
+    writeFileSync(docPath(baseDir, doc.id), blob);
+  } catch (err) {
+    throw new Error(
+      `Failed to write document ${doc.id}: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
 }
 
 export function addDocument(
@@ -69,12 +101,24 @@ export function addDocument(
 }
 
 export function listDocuments(baseDir: string, key: Uint8Array): DocumentMetadata[] {
-  const dir = getVaultSubdir(baseDir);
-  const files = readdirSync(dir).filter((f) => f.endsWith('.enc'));
+  let files: string[];
+  try {
+    files = readdirSync(getVaultSubdir(baseDir)).filter((f) => f.endsWith('.enc'));
+  } catch (err) {
+    throw new Error(
+      `Failed to read vault: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
   const results: DocumentMetadata[] = [];
   for (const file of files) {
     const id = file.slice(0, -4);
-    const doc = readDoc(baseDir, key, id);
+    let doc: StoredDocument | null;
+    try {
+      doc = readDoc(baseDir, key, id);
+    } catch {
+      continue;
+    }
     if (!doc) continue;
     const meta: DocumentMetadata = { id: doc.id, type: doc.document_type, label: doc.label };
     const expiryDate = doc.fields['expiry_date'];
@@ -89,11 +133,23 @@ export function getDocumentByType(
   key: Uint8Array,
   documentType: string
 ): StoredDocument | null {
-  const dir = getVaultSubdir(baseDir);
-  const files = readdirSync(dir).filter((f) => f.endsWith('.enc'));
+  let files: string[];
+  try {
+    files = readdirSync(getVaultSubdir(baseDir)).filter((f) => f.endsWith('.enc'));
+  } catch (err) {
+    throw new Error(
+      `Failed to read vault: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
   for (const file of files) {
     const id = file.slice(0, -4);
-    const doc = readDoc(baseDir, key, id);
+    let doc: StoredDocument | null;
+    try {
+      doc = readDoc(baseDir, key, id);
+    } catch {
+      continue;
+    }
     if (doc?.document_type === documentType) return doc;
   }
   return null;
@@ -116,6 +172,13 @@ export function updateDocument(
 export function deleteDocument(baseDir: string, key: Uint8Array, id: string): boolean {
   const path = docPath(baseDir, id);
   if (!existsSync(path)) return false;
-  unlinkSync(path);
+  try {
+    unlinkSync(path);
+  } catch (err) {
+    throw new Error(
+      `Failed to delete document ${id}: ${err instanceof Error ? err.message : String(err)}`,
+      { cause: err }
+    );
+  }
   return true;
 }

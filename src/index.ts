@@ -6,7 +6,6 @@ const transport = new StdioServerTransport();
 
 await server.connect(transport);
 
-process.on('SIGINT', async () => {
-  await server.close();
-  process.exit(0);
+process.on('SIGINT', () => {
+  void server.close().then(() => process.exit(0));
 });

@@ -14,15 +14,17 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
       fields: z.record(z.string(), z.unknown()).describe('The document field values to store'),
     },
     async ({ document_type, label, fields }) => {
-      const doc = addDocument(vaultDir, key, { document_type, label, fields });
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({ id: doc.id, created: true }),
-          },
-        ],
-      };
+      try {
+        const doc = addDocument(vaultDir, key, { document_type, label, fields });
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ id: doc.id, created: true }) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
+          isError: true,
+        };
+      }
     }
   );
 }

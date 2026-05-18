@@ -18,33 +18,40 @@ export function register(server: McpServer, vaultDir: string, key: Uint8Array): 
         .describe('Why the calling agent needs this photo — shown to the user for consent'),
     },
     async ({ type, purpose }) => {
-      const doc = getDocumentByType(vaultDir, key, `photo_${type}`);
-      if (!doc) {
+      try {
+        const doc = getDocumentByType(vaultDir, key, `photo_${type}`);
+        if (!doc) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: `No ${type} photo found in vault` }) }],
+            isError: true,
+          };
+        }
+        appendLogEntry(vaultDir, key, {
+          tool_name: 'get_photo',
+          client_name: server.server.getClientVersion()?.name ?? 'unknown',
+          fields_requested: [type],
+          purpose,
+          document_id: doc.id,
+        });
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: `No ${type} photo found in vault` }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                data: doc.fields['data'],
+                mime_type: doc.fields['mime_type'],
+                photo_type: type,
+                purpose,
+              }),
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ error: err instanceof Error ? err.message : 'Internal error' }) }],
           isError: true,
         };
       }
-      appendLogEntry(vaultDir, key, {
-        tool_name: 'get_photo',
-        client_name: 'unknown',
-        fields_requested: [type],
-        purpose,
-        document_id: doc.id,
-      });
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              data: doc.fields['data'],
-              mime_type: doc.fields['mime_type'],
-              photo_type: type,
-              purpose,
-            }),
-          },
-        ],
-      };
     }
   );
 }

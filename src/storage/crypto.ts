@@ -13,9 +13,13 @@ export function encrypt(key: Uint8Array, plaintext: Uint8Array): Uint8Array {
   return result;
 }
 
-export function decrypt(key: Uint8Array, blob: Uint8Array): Uint8Array {
-  const nonce = blob.subarray(0, NONCE_LENGTH);
-  const ciphertext = blob.subarray(NONCE_LENGTH);
-  const cipher = xchacha20poly1305(key, nonce);
-  return cipher.decrypt(ciphertext);
+export function decrypt(key: Uint8Array, blob: Uint8Array): Uint8Array | null {
+  try {
+    const nonce = blob.subarray(0, NONCE_LENGTH);
+    const ciphertext = blob.subarray(NONCE_LENGTH);
+    const cipher = xchacha20poly1305(key, nonce);
+    return cipher.decrypt(ciphertext);
+  } catch {
+    return null;
+  }
 }

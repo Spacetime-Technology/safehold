@@ -1,17 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
 import { retrieveWithConsent } from '../shared/with-consent.js';
-
-const PASSPORT_FIELDS = [
-  'given_name',
-  'family_name',
-  'nationality',
-  'date_of_birth',
-  'passport_number',
-  'expiry_date',
-  'issuing_country',
-  'gender',
-] as const;
+import { PASSPORT_FIELDS } from '../../types/document-fields.js';
 
 export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(

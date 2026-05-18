@@ -46,6 +46,19 @@ Other MCP clients can request specific fields from your documents. You control w
 
 Every retrieval tool accepts a `purpose` parameter. That purpose is shown to you at consent time so you always know why a field is being requested.
 
+## Prompts (v1)
+
+Safehold also ships ready-made workflow prompts. These show up as slash commands in MCP clients (Claude Desktop, Cursor, Claude Code, Zed) so common tasks don't have to be re-prompted from scratch.
+
+| Prompt | Description |
+|--------|-------------|
+| `onboard_document` | Guided intake to add or update a passport, national ID, driving licence, or visa |
+| `travel_preflight` | Check passport and visa validity for an upcoming trip |
+| `selective_share` | Share the minimum a service actually needs, with an explicit consent purpose |
+| `expiry_audit` | Surface anything expiring soon (metadata only, no consent prompts) |
+
+Prompts don't access your data themselves. They tell the calling agent which Safehold tools to call, in what order, and with what `purpose`. Every retrieval still goes through the normal consent flow.
+
 ## Quick Install
 
 Requires Node.js >=20. No build step.

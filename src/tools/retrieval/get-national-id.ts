@@ -1,16 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
 import { retrieveWithConsent } from '../shared/with-consent.js';
-
-const NATIONAL_ID_FIELDS = [
-  'given_name',
-  'family_name',
-  'date_of_birth',
-  'id_number',
-  'nationality',
-  'expiry_date',
-  'issuing_country',
-] as const;
+import { NATIONAL_ID_FIELDS } from '../../types/document-fields.js';
 
 export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(

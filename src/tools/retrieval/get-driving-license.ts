@@ -1,16 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
 import { retrieveWithConsent } from '../shared/with-consent.js';
-
-const DRIVING_LICENSE_FIELDS = [
-  'given_name',
-  'family_name',
-  'date_of_birth',
-  'license_number',
-  'categories',
-  'expiry_date',
-  'issuing_authority',
-] as const;
+import { DRIVING_LICENSE_FIELDS } from '../../types/document-fields.js';
 
 export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(

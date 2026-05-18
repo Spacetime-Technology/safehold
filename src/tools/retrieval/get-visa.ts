@@ -1,15 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
 import { retrieveWithConsent } from '../shared/with-consent.js';
-
-const VISA_FIELDS = [
-  'visa_type',
-  'issuing_country',
-  'issue_date',
-  'expiry_date',
-  'entries_allowed',
-  'reference_number',
-] as const;
+import { VISA_FIELDS } from '../../types/document-fields.js';
 
 export function register(server: McpServer, vaultDir: string, key: Uint8Array): void {
   server.tool(

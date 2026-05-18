@@ -16,6 +16,10 @@ import { register as registerAddDocument } from './tools/management/add-document
 import { register as registerDeleteDocument } from './tools/management/delete-document.js';
 import { register as registerUpdateDocument } from './tools/management/update-document.js';
 import { register as registerGetAccessLog } from './tools/management/get-access-log.js';
+import { register as registerOnboardDocumentPrompt } from './prompts/onboard-document.js';
+import { register as registerTravelPreflightPrompt } from './prompts/travel-preflight.js';
+import { register as registerSelectiveSharePrompt } from './prompts/selective-share.js';
+import { register as registerExpiryAuditPrompt } from './prompts/expiry-audit.js';
 
 function assertVaultReady(vaultDir: string, key: Uint8Array): void {
   mkdirSync(join(vaultDir, 'vault'), { recursive: true, mode: 0o700 });
@@ -66,6 +70,11 @@ export function createServer(vaultDir?: string): McpServer {
   registerDeleteDocument(server, resolvedVaultDir, key);
   registerUpdateDocument(server, resolvedVaultDir, key);
   registerGetAccessLog(server, resolvedVaultDir, key);
+
+  registerOnboardDocumentPrompt(server);
+  registerTravelPreflightPrompt(server);
+  registerSelectiveSharePrompt(server);
+  registerExpiryAuditPrompt(server);
 
   return server;
 }

@@ -1,0 +1,26 @@
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod/v4';
+
+export function register(server: McpServer): void {
+  server.tool(
+    'add_document',
+    'Add a new document to the vault. The document is stored locally and encrypted.',
+    {
+      document_type: z.string().describe('The type of document (e.g. "passport", "visa")'),
+      label: z
+        .string()
+        .describe('A human-readable label for this document, e.g. "UK Passport 2024"'),
+      fields: z.record(z.string(), z.unknown()).describe('The document field values to store'),
+    },
+    async () => {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ id: 'stub-id-001', created: true }),
+          },
+        ],
+      };
+    }
+  );
+}

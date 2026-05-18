@@ -1,6 +1,6 @@
 {
   "name": "safehold",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Self-custody KYC document storage via MCP",
   "mcpName": "io.github.Spacetime-Technology/safehold",
   "type": "module",
